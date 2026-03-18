@@ -1,7 +1,14 @@
 package example
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func SayHello() {
-	fmt.Println("Hello")
+	s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9} // cap = 9
+   s2 := s1[3:4:7]                        // cap = 4 - 3 = 1
+   // 容量不足，分配新的底层数组
+   s2 = append(s2, 1)
+   fmt.Println(s2)
+   fmt.Println(s1)
 }
