@@ -2,12 +2,32 @@ package example
 
 import (
 	"fmt"
+	"sync"
 )
 
 func SayHello() {
-	s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9} // cap = 9
-   s2 := s1[3:4:7]                        // cap = 4 - 3 = 1
-   s2 = append(s2, 1)
-   fmt.Println(s2)
-   fmt.Println(s1)
+	var group sync.WaitGroup
+	var mutex sync.Mutex
+	group.Add(10)
+   // map
+   mp := make(map[string]int, 10)
+   for i := 0; i < 10; i++ {
+      go func() {
+         // 写操作
+         for i := 0; i < 100; i++ {
+            mutex.Lock()
+            mp["helloworld"] = 1
+            mutex.Unlock()
+         }
+         // 读操作
+         for i := 0; i < 10; i++ {
+            mutex.Lock()
+            fmt.Println(mp["helloworld"])
+            mutex.Unlock()
+         }
+         group.Done()
+      }()
+   }
+   group.Wait()
+	
 }
