@@ -1,7 +1,6 @@
 package main
 
 import (
-	"my-go-project/gin/res/res"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,11 +22,9 @@ func main() {
 	gin.SetMode("release")
 	// 初始化路由
 	r := gin.Default()
-	r.GET("/login", func(c *gin.Context) {
-		enter.OkWithMsg(c, "登陆成功")
-	})
-	r.GET("/users", func(c *gin.Context) {
-		enter.FailWithCode(c, enter.RoleErrCode)
+	r.LoadHTMLGlob("gin/templetes/*")
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(200, "index.html", nil)
 	})
 	r.Run(":8080")
 }
