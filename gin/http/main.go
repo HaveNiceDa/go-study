@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,9 +24,11 @@ func main() {
 	gin.SetMode("release")
 	// 初始化路由
 	r := gin.Default()
-	r.LoadHTMLGlob("gin/templetes/*")
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(200, "index.html", nil)
-	})
+	r.Static("st", "gin/static")
+	r.GET("/", Index)
+	r.GET("users/:id", func(c *gin.Context) {
+  userID := c.Param("id")
+  fmt.Println(userID)
+})
 	r.Run(":8080")
 }
