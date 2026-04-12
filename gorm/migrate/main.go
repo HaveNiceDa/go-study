@@ -30,18 +30,14 @@ func (u *UserModel) BeforeCreate(tx *gorm.DB) error {
 
 func main() {
   // 连接数据库
-  db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/gorm_new_db"), &gorm.Config{})
+  db, err := gorm.Open(mysql.Open("root:root@tcp(127.0.0.1:3306)/gorm_new_db?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{})
   if err != nil {
     fmt.Println(err)
     return
   }
   
-  err = db.AutoMigrate(&UserModel{})
-  if err != nil {
-    fmt.Println(err)
-    return
-  }
-  
-  InsertData(db)
-  fmt.Println("生成表结构成功！")
+  // 查全部
+var users []UserModel
+db.Debug().Find(&users)
+fmt.Println(users)
 }
