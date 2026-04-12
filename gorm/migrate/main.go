@@ -8,10 +8,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserModelss struct {
+type UserModel struct {
   ID        int64     `gorm:"primaryKey"`      // 主键
   Name      string    `gorm:"not null;unique"` // 不能为空，且唯一
   CreatedAt time.Time // 在创建记录时自动设置为当前时间。
+}
+
+// InsertData 插入数据
+func InsertData(db *gorm.DB) {
+  user := UserModel{Name: "张三"}
+  err := db.Create(&user).Error
+  // 创建成功之后，数据会回填
+  fmt.Println(user, err)
+}
+
+func (u *UserModel) BeforeCreate(tx *gorm.DB) error {
+  fmt.Println("创建的钩子函数")
+  u.Name = "枫枫"
+  return nil
 }
 
 func main() {
@@ -22,10 +36,12 @@ func main() {
     return
   }
   
-  err = db.AutoMigrate(&UserModelss{})
+  err = db.AutoMigrate(&UserModel{})
   if err != nil {
     fmt.Println(err)
     return
   }
+  
+  InsertData(db)
   fmt.Println("生成表结构成功！")
 }
