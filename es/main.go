@@ -10,5 +10,7 @@ import (
 func main() {
 	core.EsConnect()
 	fmt.Println(global.ESClient)
+	indexs.ExistsIndex("user_index")
 	indexs.CreateIndex()
+
 }
