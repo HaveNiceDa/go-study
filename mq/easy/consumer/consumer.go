@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	queueName := flag.String("queue", "", "队列名称（每个消费者使用不同名称）")
+	routingKey := flag.String("key", "", "路由键（node001 或 node002）")
 	flag.Parse()
-	if *queueName == "" {
-		log.Fatal("必须指定 -queue 参数，例如: go run consumer.go -queue consumer_a")
+	if *routingKey == "" {
+		log.Fatal("必须指定 -key 参数，例如: go run consumer.go -key node001")
 	}
 
 	conn, err := amqp.Dial("amqp://admin:password@localhost:5672/")
@@ -27,11 +27,11 @@ func main() {
 	}
 	defer ch.Close()
 
-	exChangeName := "logs_persistent"
+	exChangeName := "logs_direct"
 
 	err = ch.ExchangeDeclare(
 		exChangeName,
-		"fanout",
+		"direct",
 		true,
 		false,
 		false,
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	q, err := ch.QueueDeclare(
-		*queueName,
+		"queue_"+*routingKey,
 		true,
 		false,
 		false,
@@ -56,7 +56,7 @@ func main() {
 
 	err = ch.QueueBind(
 		q.Name,
-		"",
+		*routingKey,
 		exChangeName,
 		false,
 		nil,
@@ -78,8 +78,8 @@ func main() {
 		log.Fatalf("创建消费者失败 %s", err)
 	}
 
-	fmt.Printf("[%s] 准备接收消息\n", *queueName)
+	fmt.Printf("[%s] 准备接收消息\n", *routingKey)
 	for d := range msgs {
-		log.Printf("[%s] 收到消息: %s\n", *queueName, d.Body)
+		log.Printf("[%s] 收到消息: %s\n", *routingKey, d.Body)
 	}
 }
