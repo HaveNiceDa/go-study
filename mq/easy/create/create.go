@@ -1,56 +1,88 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
 func main() {
-	// 连接 RabbitMQ
+	flag.Parse()
+	queues := flag.Args()
+	if len(queues) == 0 {
+		log.Fatal("必须指定队列名称，例如: go run create.go consumer_a consumer_b")
+	}
+
 	conn, err := amqp.Dial("amqp://admin:password@localhost:5672/")
 	if err != nil {
 		log.Fatalf("无法连接到 RabbitMQ: %v", err)
 	}
 	defer conn.Close()
 
-	// 创建通道
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("无法打开通道: %v", err)
 	}
 	defer ch.Close()
 
-	queueName := "xxx"
+	exChangeName := "logs_persistent"
 
-	// 声明队列
-	q, err := ch.QueueDeclare(
-		queueName, // 队列名称
-		false,     // 持久性
-		false,     // 自动删除
-		false,     // 排他性
-		false,     // 非阻塞
-		nil,       // 其他参数
+	err = ch.ExchangeDeclare(
+		exChangeName,
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
-		log.Fatalf("无法声明队列: %v", err)
+		log.Fatalf("声明交换器失败 %s", err)
 	}
 
-	// 发送消息
-	body := fmt.Sprintf("msg-%d", 1)
-	err = ch.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
-		amqp.Publishing{
-			Body: []byte(body),
-		})
-	if err != nil {
-		logrus.Errorf("发送失败: %v", err)
-		return
+	for _, name := range queues {
+		q, err := ch.QueueDeclare(
+			name,
+			true,
+			false,
+			false,
+			false,
+			nil,
+		)
+		if err != nil {
+			log.Fatalf("声明队列 %s 失败: %s", name, err)
+		}
+
+		err = ch.QueueBind(
+			q.Name,
+			"",
+			exChangeName,
+			false,
+			nil,
+		)
+		if err != nil {
+			log.Fatalf("绑定队列 %s 失败: %s", name, err)
+		}
+		log.Printf("队列 %s 已声明并绑定到 %s", name, exChangeName)
 	}
-	fmt.Printf("发送消息: %s\n", body)
+
+	for i := 0; i < 20; i++ {
+		body := fmt.Sprintf("msg-%d", i)
+		err = ch.Publish(
+			exChangeName,
+			"",
+			false,
+			false,
+			amqp.Publishing{
+				DeliveryMode: amqp.Persistent,
+				Body:         []byte(body),
+			})
+		if err != nil {
+			log.Printf("发送失败: %v", err)
+			return
+		}
+		fmt.Printf("发送消息: %s\n", body)
+	}
 }
