@@ -68,7 +68,7 @@ func main() {
 		routingKey string
 		body       string
 	}{
-		{"kern.critical", "内核严重错误"},
+		{routingKey: "kern.critical", body: "内核严重错误"},
 		{"kern.info", "内核信息"},
 		{"auth.warning", "认证警告"},
 		{"auth.info", "认证信息"},
